@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Be My Valentine?</title>
+  <style>
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      text-align: center;
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      color: #ff4d6d;
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    #yes {
+      background-color: #ff4d6d;
+      color: white;
+      margin-right: 20px;
+    }
+
+    #no {
+      background-color: #ccc;
+      color: black;
+      position: absolute;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Will you be my Valentine? 💘</h1>
+    <button id="yes" onclick="yesClicked()">Yes 💖</button>
+    <button id="no">No 💔</button>
+  </div>
+
+  <script>
+    const questions = [
+      "Do you promise to prioritize me over anything? 🥺",
+      "Will you hold my hand forever? 🥺",
+      "Will you be my Valentine? 💘"
+    ];
+  
+    let currentQuestion = 0;
+  
+    const questionText = document.querySelector("h1");
+    const noButton = document.getElementById("no");
+  
+    function showQuestion() {
+      questionText.innerText = questions[currentQuestion];
+    }
+  
+    showQuestion();
+  
+    document.getElementById("yes").addEventListener("click", () => {
+      currentQuestion++;
+  
+      if (currentQuestion < questions.length) {
+        showQuestion();
+          } else {
+          document.body.innerHTML = `
+            <div style="
+              height:100vh;
+              display:flex;
+              flex-direction:column;
+              justify-content:center;
+              align-items:center;
+              background:linear-gradient(135deg,#ff9a9e,#fad0c4);
+              font-family:Arial;
+              text-align:center;
+            ">
+              <h1 style="color:white;font-size:42px;margin-bottom:20px;">
+                Yaaaay!!! 💕🎉
+              </h1>
+
+              <img 
+                src="yay.jpg"
+                alt="Yay Valentine"
+                style="
+                  max-width:300px;
+                  border-radius:20px;
+                  box-shadow:0 10px 25px rgba(0,0,0,0.3);
+                "
+              />
+
+              <p style="color:white;font-size:20px;margin-top:20px;">
+                Best. Valentine. Ever 😍
+              </p>
+            </div>
+          `;
+        }
+
+    });
+  
+    noButton.addEventListener("mouseover", () => {
+      const x = Math.random() * (window.innerWidth - noButton.offsetWidth);
+      const y = Math.random() * (window.innerHeight - noButton.offsetHeight);
+  
+      noButton.style.left = `${x}px`;
+      noButton.style.top = `${y}px`;
+    });
+  </script>
+  
+
+</body>
+</html>
