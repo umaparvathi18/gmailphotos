@@ -26,7 +26,7 @@
       padding: 40px;
       border-radius: 20px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      max-width: 420px;
+      max-width: 480px;
       width: 90%;
       position: relative;
       z-index: 2;
@@ -41,12 +41,14 @@
       text-align: center;
     }
 
-
     img {
       max-width: 250px;
       border-radius: 15px;
       margin-bottom: 20px;
       animation: fadeZoom 0.6s ease;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     @keyframes fadeZoom {
@@ -61,23 +63,32 @@
     }
 
     button {
-      padding: 14px 28px;
-      font-size: 18px;
+      padding: 14px 24px;
+      font-size: 16px;
       border: none;
       border-radius: 12px;
       cursor: pointer;
+      margin: 6px;
+      min-width: 140px;
     }
 
     #yes {
       background-color: #ff4d6d;
       color: white;
-      margin-right: 15px;
     }
 
     #no {
       background-color: #ccc;
       color: black;
-      position: absolute;
+      position: relative; /* normal at first */
+    }
+
+    #buttonArea {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
     }
 
     .shake {
@@ -121,6 +132,31 @@
       margin-bottom: 10px;
     }
 
+    /* Quiz styles */
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .quiz-btn {
+      background-color: #ffdde3;
+      color: #333;
+      width: 100%;
+      max-width: 300px;
+      margin: 6px 0;
+    }
+
+    .quiz-btn.correct {
+      background-color: #8bc34a;
+      color: white;
+    }
+
+    .quiz-btn.wrong {
+      background-color: #f44336;
+      color: white;
+    }
+
     /* Falling hearts */
     .heart {
       position: fixed;
@@ -149,8 +185,8 @@
       }
 
       button {
-        font-size: 16px;
-        padding: 12px 20px;
+        font-size: 15px;
+        padding: 12px 18px;
       }
     }
   </style>
@@ -166,7 +202,8 @@
     <p id="noMessage"></p>
     <h1></h1>
     <img id="questionImage" />
-    <div>
+
+    <div id="buttonArea">
       <button id="yes">Yes 💖</button>
       <button id="no">No 💔</button>
     </div>
@@ -175,16 +212,45 @@
   <script>
     const questions = [
       {
+        type: "welcome",
+        text: "Hello sir 😌✨\nYou've been specially invited by your girl 💕\nShall we continue?",
+        bg: "linear-gradient(135deg, #ff9a9e, #fad0c4)"
+      },
+      {
+        type: "quiz",
+        text: "Quick quiz 😏\nWhat is my favourite Biryani?",
+        options: ["Dum Biryani", "Boneless Biryani", "FryPeice Biryani", "Pot Biryani"],
+        correct: "FryPeice Biryani",
+        bg: "linear-gradient(135deg, #ffd3e0, #ff9aa2)"
+      },
+      {
+        type: "quiz",
+        text: "What is my favourite location? 🌍",
+        options: ["Paris", "Maldives", "New York", "Tokyo"],
+        correct: "Paris",
+        bg: "linear-gradient(135deg, #d4fc79, #96e6a1)"
+      },
+      {
+        type: "quiz",
+        text: "What is my favourite movie? 🎬",
+        options: ["Panja", "Jalsa", "Gabbar Singh", "Kushi"],
+        correct: "Jalsa",
+        bg: "linear-gradient(135deg, #a1c4fd, #c2e9fb)"
+      },
+      {
+        type: "normal",
         text: "Do you promise to prioritize me over anything? 🥺",
         image: "images/dramatic1.jpg",
         bg: "linear-gradient(135deg, #ff758c, #ff7eb3)"
       },
       {
+        type: "normal",
         text: "Will you hold my hand forever?? 😭",
-        image: "images/dramatic2.JPG",
+        image: "images/dramatic2.jpg",
         bg: "linear-gradient(135deg, #ff416c, #ff4b2b)"
       },
       {
+        type: "normal",
         text: "Will you be my Valentine??? 💘💥",
         image: "images/dramatic3.jpg",
         bg: "linear-gradient(135deg, #ff416c, #ff4b2b)"
@@ -196,11 +262,10 @@
 
     const questionText = document.querySelector("h1");
     const questionImage = document.getElementById("questionImage");
-    const noButton = document.getElementById("no");
-    const yesButton = document.getElementById("yes");
     const yaySound = new Audio("sounds/yay.mp3");
     const noMessage = document.getElementById("noMessage");
     const progressBar = document.getElementById("progressBar");
+    const buttonArea = document.getElementById("buttonArea");
 
     const noMessages = [
       "Hey! 😠",
@@ -220,7 +285,6 @@
       }, 40);
     }
 
-
     function updateProgress() {
       const progress = ((currentQuestion + 1) / questions.length) * 100;
       progressBar.style.width = progress + "%";
@@ -228,26 +292,86 @@
 
     function showQuestion() {
       const q = questions[currentQuestion];
-      typeWriter(q.text);
-      questionImage.src = q.image;
       document.body.style.background = q.bg;
-
+      typeWriter(q.text);
       updateProgress();
-
-      // Reset "No" button
-      noScale = 1;
-      noButton.classList.remove("hidden", "shake");
-      noButton.style.transform = "scale(1)";
-      noButton.style.left = "55%";
-      noButton.style.top = "auto";
       noMessage.innerText = "";
+
+      // Always reset button area
+      buttonArea.innerHTML = `
+        <button id="yes">Yes 💖</button>
+        <button id="no">No 💔</button>
+      `;
+
+      // Rebind buttons
+      const newYes = document.getElementById("yes");
+      const newNo = document.getElementById("no");
+      newYes.addEventListener("click", onYesClick);
+      newNo.addEventListener("mouseover", attackNoButton);
+      newNo.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        attackNoButton();
+      });
+
+      if (q.type === "welcome") {
+        questionImage.style.display = "none";
+        newNo.style.display = "none";
+        newYes.innerText = "Let's go 💖";
+      }
+      else if (q.type === "quiz") {
+        questionImage.style.display = "none";
+        newYes.style.display = "none";
+        newNo.style.display = "none";
+        renderQuizOptions(q);
+      }
+      else {
+        questionImage.style.display = "block";
+        questionImage.src = q.image;
+        newYes.innerText = "Yes 💖";
+        newNo.style.display = "inline-block";
+
+        // Reset No button behavior
+        noScale = 1;
+        newNo.classList.remove("hidden", "shake");
+        newNo.style.position = "relative";
+        newNo.style.left = "auto";
+        newNo.style.top = "auto";
+        newNo.style.transform = "scale(1)";
+      }
     }
 
-    showQuestion();
+    function renderQuizOptions(q) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "quiz-options";
 
-    yesButton.addEventListener("click", () => {
+      q.options.forEach(option => {
+        const btn = document.createElement("button");
+        btn.className = "quiz-btn";
+        btn.innerText = option;
+        btn.onclick = () => handleQuizAnswer(btn, q.correct);
+        wrapper.appendChild(btn);
+      });
+
+      buttonArea.appendChild(wrapper);
+    }
+
+    function handleQuizAnswer(button, correctAnswer) {
+      if (button.innerText === correctAnswer) {
+        button.classList.add("correct");
+        setTimeout(() => {
+          currentQuestion++;
+          showQuestion();
+        }, 800);
+      } else {
+        button.classList.add("wrong");
+        setTimeout(() => {
+          button.classList.remove("wrong");
+        }, 500);
+      }
+    }
+
+    function onYesClick() {
       currentQuestion++;
-
       if (currentQuestion < questions.length) {
         showQuestion();
       } else {
@@ -272,23 +396,29 @@
             <h1 style="color:white;font-size:42px;">YAAAAAY 💕🎉</h1>
             <img src="images/final.jpg" style="max-width:300px;border-radius:20px;">
             <p style="color:white;font-size:22px;">
-              You are officially stuck with me 😌💘
+              I lOVE YOUUUU 😌💘
             </p>
           </div>
         `;
       }
-    });
+    }
 
     function attackNoButton() {
+      const noBtn = document.getElementById("no");
+      if (!noBtn) return;
+
+      // Make it absolute only when it starts running
+      noBtn.style.position = "absolute";
+
       noScale -= 0.15;
 
       if (noScale < 0.3) {
-        noButton.classList.add("hidden");
+        noBtn.classList.add("hidden");
         return;
       }
 
-      noButton.style.transform = `scale(${noScale})`;
-      noButton.classList.add("shake");
+      noBtn.style.transform = `scale(${noScale})`;
+      noBtn.classList.add("shake");
 
       questionImage.src =
         Math.random() > 0.5 ? "images/sad1.gif" : "images/sad2.gif";
@@ -296,25 +426,20 @@
       noMessage.innerText =
         noMessages[Math.floor(Math.random() * noMessages.length)];
 
-      const x = Math.random() * (window.innerWidth - noButton.offsetWidth);
-      const y = Math.random() * (window.innerHeight - noButton.offsetHeight);
+      const x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
+      const y = Math.random() * (window.innerHeight - noBtn.offsetHeight);
 
-      noButton.style.left = `${x}px`;
-      noButton.style.top = `${y}px`;
+      noBtn.style.left = `${x}px`;
+      noBtn.style.top = `${y}px`;
 
       if (navigator.vibrate) navigator.vibrate(150);
     }
 
-    noButton.addEventListener("mouseover", attackNoButton);
-    noButton.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      attackNoButton();
-    });
-
     // Easter egg: press "Y" to auto-click Yes
     document.addEventListener("keydown", (e) => {
       if (e.key.toLowerCase() === "y") {
-        yesButton.click();
+        const yesBtn = document.getElementById("yes");
+        if (yesBtn) yesBtn.click();
       }
     });
 
@@ -329,6 +454,8 @@
 
       setTimeout(() => heart.remove(), 5000);
     }, 400);
+
+    showQuestion();
   </script>
 
 </body>
