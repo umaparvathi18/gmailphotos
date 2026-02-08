@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Be My Valentine 💘</title>
 
+  <!-- Confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
   <style>
     body {
       height: 100vh;
@@ -26,12 +29,18 @@
       max-width: 420px;
       width: 90%;
       position: relative;
+      z-index: 2;
     }
 
     h1 {
       color: #ff4d6d;
       margin-bottom: 20px;
+      min-height: 60px;
+      white-space: normal;
+      word-wrap: break-word;
+      text-align: center;
     }
+
 
     img {
       max-width: 250px;
@@ -87,6 +96,48 @@
       display: none;
     }
 
+    /* Progress bar */
+    .progress-container {
+      width: 100%;
+      background: #eee;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 10px;
+      width: 0%;
+      background: #ff4d6d;
+      border-radius: 10px;
+      transition: width 0.4s ease;
+    }
+
+    /* No button message */
+    #noMessage {
+      color: #ff4d6d;
+      font-weight: bold;
+      min-height: 24px;
+      margin-bottom: 10px;
+    }
+
+    /* Falling hearts */
+    .heart {
+      position: fixed;
+      top: -10px;
+      font-size: 20px;
+      animation: fall 5s linear forwards;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(100vh);
+        opacity: 0;
+      }
+    }
+
     /* Mobile tweaks */
     @media (max-width: 600px) {
       h1 {
@@ -108,6 +159,11 @@
 <body>
 
   <div class="container">
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <p id="noMessage"></p>
     <h1></h1>
     <img id="questionImage" />
     <div>
@@ -125,7 +181,7 @@
       },
       {
         text: "Will you hold my hand forever?? 😭",
-        image: "images/dramatic2.JPG",
+        image: "images/dramatic2.jpg",
         bg: "linear-gradient(135deg, #ff416c, #ff4b2b)"
       },
       {
@@ -143,21 +199,49 @@
     const noButton = document.getElementById("no");
     const yesButton = document.getElementById("yes");
     const yaySound = new Audio("sounds/yay.mp3");
+    const noMessage = document.getElementById("noMessage");
+    const progressBar = document.getElementById("progressBar");
+
+    const noMessages = [
+      "Hey! 😠",
+      "Nice try!",
+      "Wrong button!",
+      "Absolutely not 😌",
+      "You thought 😏"
+    ];
+
+    function typeWriter(text) {
+      questionText.innerHTML = "";
+      let i = 0;
+      const interval = setInterval(() => {
+        questionText.innerHTML += text[i];
+        i++;
+        if (i >= text.length) clearInterval(interval);
+      }, 40);
+    }
+
+
+    function updateProgress() {
+      const progress = ((currentQuestion + 1) / questions.length) * 100;
+      progressBar.style.width = progress + "%";
+    }
 
     function showQuestion() {
       const q = questions[currentQuestion];
-      questionText.innerText = q.text;
+      typeWriter(q.text);
       questionImage.src = q.image;
       document.body.style.background = q.bg;
 
-      // 🔁 RESET "NO" BUTTON
+      updateProgress();
+
+      // Reset "No" button
       noScale = 1;
       noButton.classList.remove("hidden", "shake");
       noButton.style.transform = "scale(1)";
       noButton.style.left = "55%";
       noButton.style.top = "auto";
+      noMessage.innerText = "";
     }
-
 
     showQuestion();
 
@@ -168,6 +252,12 @@
         showQuestion();
       } else {
         yaySound.play();
+        confetti({
+          particleCount: 200,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+
         document.body.innerHTML = `
           <div style="
             height:100vh;
@@ -203,6 +293,9 @@
       questionImage.src =
         Math.random() > 0.5 ? "images/sad1.gif" : "images/sad2.gif";
 
+      noMessage.innerText =
+        noMessages[Math.floor(Math.random() * noMessages.length)];
+
       const x = Math.random() * (window.innerWidth - noButton.offsetWidth);
       const y = Math.random() * (window.innerHeight - noButton.offsetHeight);
 
@@ -217,6 +310,25 @@
       e.preventDefault();
       attackNoButton();
     });
+
+    // Easter egg: press "Y" to auto-click Yes
+    document.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "y") {
+        yesButton.click();
+      }
+    });
+
+    // Falling hearts animation
+    setInterval(() => {
+      const heart = document.createElement("div");
+      heart.classList.add("heart");
+      heart.innerText = "💖";
+      heart.style.left = Math.random() * 100 + "vw";
+      heart.style.fontSize = Math.random() * 20 + 15 + "px";
+      document.body.appendChild(heart);
+
+      setTimeout(() => heart.remove(), 5000);
+    }, 400);
   </script>
 
 </body>
